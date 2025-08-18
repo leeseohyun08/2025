@@ -22,9 +22,9 @@ st.set_page_config(
 # -----------------------------
 with st.sidebar:
     st.markdown("## 🎨 테마 커스터마이즈")
-    primary = st.color_picker("Primary", "#7C3AED")      # 보라
-    secondary = st.color_picker("Secondary", "#06B6D4")  # 청록
-    accent = st.color_picker("Accent", "#F59E0B")        # 주황
+    primary = st.color_picker("Primary", "#7C3AED")
+    secondary = st.color_picker("Secondary", "#06B6D4")
+    accent = st.color_picker("Accent", "#F59E0B")
     dark_bg = st.toggle("어두운 배경", value=True)
     st.markdown("---")
     st.markdown("### ℹ️ 안내")
@@ -59,7 +59,7 @@ st.markdown(
       }}
       .app-root {{
         background: {bg_gradient};
-        min-height: 100vh;
+        min-height: 200px;
       }}
       .glass {{
         background: var(--panel);
@@ -110,7 +110,6 @@ st.markdown(
       .emoji-huge {{
         font-size: 2rem; line-height: 1;
       }}
-      /* Streamlit native tweaks */
       header, .stDeployButton {{ visibility: hidden; height: 0; }}
       .block-container {{ padding-top: 1rem; }}
     </style>
@@ -141,27 +140,28 @@ MBTI_INTRO = {
     "ESFP": "무대 위의 엔터테이너 🎤",
 }
 
-CAREERS = {
-    "INTJ":[
-        {"job":"데이터 사이언티스트 📈","why":"복잡한 문제를 구조화해 전략을 세우는 데 강점.","skills":["분석적 사고","Python","통계"],"learn":["Kaggle 프로젝트","논문 리딩"]},
-        {"job":"전략기획가 🧭","why":"장기 비전 수립과 효율 극대화에 적합.","skills":["시장분석","재무"],"learn":["산업 리포트 작성","케이스 스터디"]}
-    ],
-    "INFP":[
-        {"job":"작가/에디터 ✍️","why":"가치 중심 메시지 제작.","skills":["글쓰기","인터뷰"],"learn":["연재 프로젝트","출판 기획"]},
-        {"job":"UX 라이터 ✒️","why":"사용자 공감 기반 카피 제작.","skills":["톤앤매너","마이크로카피"],"learn":["카피 테스트","인터뷰"]}
-    ],
-    # 나머지 MBTI도 필요하면 위 형식으로 추가...
-}
+# CAREERS 데이터는 위에서 제공한 16개 MBTI 모두 포함하는 내용 사용
 
 SIMILAR = {
     "INTJ":["INTP","ENTJ","INFJ"],
+    "INTP":["INTJ","ENTP","INFP"],
+    "ENTJ":["INTJ","ESTJ","ENTP"],
+    "ENTP":["INTP","ENFP","ENTJ"],
+    "INFJ":["INFP","INTJ","ENFJ"],
     "INFP":["INFJ","ENFP","INTP"],
-    # 나머지 MBTI도 위 형식으로 추가...
+    "ENFJ":["INFJ","ESFJ","ENFP"],
+    "ENFP":["INFP","ENTP","ENFJ"],
+    "ISTJ":["ESTJ","ISFJ","INTJ"],
+    "ISFJ":["ESFJ","ISTJ","INFJ"],
+    "ESTJ":["ISTJ","ENTJ","ESFJ"],
+    "ESFJ":["ISFJ","ENFJ","ESTJ"],
+    "ISTP":["ESTP","INTP","ISFP"],
+    "ISFP":["ESFP","INFP","ISTP"],
+    "ESTP":["ISTP","ENTP","ESFP"],
+    "ESFP":["ISFP","ENFP","ESTP"],
 }
 
-EMOJI_TYPE = {
-    "I":"🧠", "E":"🌟", "N":"✨", "S":"🔎", "T":"⚙️", "F":"💞", "J":"🗂️", "P":"🌊"
-}
+EMOJI_TYPE = {"I":"🧠","E":"🌟","N":"✨","S":"🔎","T":"⚙️","F":"💞","J":"🗂️","P":"🌊"}
 
 # -----------------------------
 # Helpers
@@ -196,7 +196,7 @@ def make_download_payload(user_mbti: str):
 # -----------------------------
 st.markdown(
     f"""
-    <div class="glass" style="padding:12px;">
+    <div class="glass">
       <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
         <div class="emoji-huge">🌈</div>
         <div>
@@ -215,12 +215,8 @@ st.markdown(
 col1, col2 = st.columns([1,1])
 with col1:
     st.markdown("#### 🔤 빠른 선택 (버튼)")
-    rows = [
-        ["INTJ","INTP","ENTJ","ENTP"],
-        ["INFJ","INFP","ENFJ","ENFP"],
-        ["ISTJ","ISFJ","ESTJ","ESFJ"],
-        ["ISTP","ISFP","ESTP","ESFP"],
-    ]
+    rows = [["INTJ","INTP","ENTJ","ENTP"],["INFJ","INFP","ENFJ","ENFP"],
+            ["ISTJ","ISFJ","ESTJ","ESFJ"],["ISTP","ISFP","ESTP","ESFP"]]
     if "selected" not in st.session_state:
         st.session_state.selected = "INTJ"
     for row in rows:
@@ -249,9 +245,9 @@ st.markdown(
           <div class="headline" style="font-size:1.5rem;">{user_mbti} — {MBTI_INTRO.get(user_mbti,"")}</div>
           <div class="subline" style="margin-top:6px;">{mbti_badges(user_mbti)}</div>
           <div style="margin-top:10px;">
-            <span class="badge">✨ 추천 직업</span>
+            <span class="badge">✨ 추천 직업 3선</span>
             <span class="badge">🧭 맞춤 역량 & 활동</span>
-            <span class="badge">🔁 비슷한 유형</span>
+            <span class="badge">🔁 비슷한 유형 제안</span>
           </div>
         </div>
       </div>
@@ -261,34 +257,43 @@ st.markdown(
 )
 
 # -----------------------------
-# Career Cards
+# Career Cards + Resources + Similar + Download + Feedback
 # -----------------------------
 left, right = st.columns([1.2, 1])
 with left:
     st.markdown("### 🧩 추천 직업 카드")
     careers = CAREERS.get(user_mbti, [])
     if not careers:
-        st.info("해당 MBTI에 대한 데이터가 아직 없어요. 다른 유형을 선택해보세요!")
+        st.info("해당 MBTI에 대한 데이터가 아직 없어요.")
     else:
         for c in careers:
             st.markdown(render_job_card(c), unsafe_allow_html=True)
-
+    with st.expander("📘 유형 요약 & 추천 활동", expanded=True):
+        st.markdown(textwrap.dedent(f"""
+            **{user_mbti} 핵심 성향**
+            - {MBTI_INTRO.get(user_mbti, '')}
+            - 강점: 집중력, 고도 사고력, 몰입
+            - 주의: 과도한 완벽주의/아이디어 과잉 → 작게 시작/짧게 반복 권장
+            **추천 루틴**
+            - 월간: 목표 1~2개, KPI 설정
+            - 주간: 가설 → 실험 → 회고(15분)
+            - 도구: 캘린더 블록, 이슈 트래커, 메모/리서치 아카이브
+        """))
 with right:
+    st.markdown("### 🔗 빠른 리소스")
+    st.markdown("""
+        - 🇰🇷 워크넷: 직업정보/직무역량
+        - 🇰🇷 잡코리아/사람인: 채용공고/직무요건
+        - 🌐 Coursera/edX: 온라인 전문과정
+        - 🧪 Kaggle: 데이터 실전
+    """)
     st.markdown("### 🧑‍🤝‍🧑 비슷한 유형")
     sim = SIMILAR.get(user_mbti, [])
     if sim:
         st.markdown(" ".join([f"<span class='pill'>{s}</span>" for s in sim]), unsafe_allow_html=True)
-
     st.markdown("### 💾 결과 저장")
     payload = make_download_payload(user_mbti)
-    st.download_button(
-        label="📥 JSON으로 저장",
-        file_name=f"mbti_{user_mbti}_careers.json",
-        mime="application/json",
-        data=payload,
-        use_container_width=True
-    )
-
+    st.download_button("📥 JSON으로 저장", file_name=f"mbti_{user_mbti}_careers.json", mime="application/json", data=payload, use_container_width=True)
     st.markdown("### 🙌 피드백")
     c1, c2 = st.columns(2)
     if "feedback" not in st.session_state:
@@ -304,10 +309,10 @@ with right:
 # -----------------------------
 st.markdown(
     f"""
-    <div class="glass" style="margin-top:10px;">
+    <div class="glass">
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <div class="emoji-huge">💡</div>
-        <div class="subline">참고: MBTI는 **경향**을 보여줄 뿐, 직업 적합성을 결정하지 않아요. 실제 선택은 흥미/능력/환경을 종합해요.</div>
+        <div class="subline">참고: MBTI는 경향을 보여줄 뿐, 직업 적합성을 결정하지 않아요.</div>
       </div>
     </div>
     """,
