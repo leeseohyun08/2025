@@ -1,5 +1,4 @@
 # app.py
-# 실행: streamlit run app.py
 import streamlit as st
 
 st.set_page_config(
@@ -31,7 +30,7 @@ panel_bg = "#0B0F19CC" if dark_bg else "#ffffff"
 card_bg = "#0F172ACC" if dark_bg else "#ffffff"
 border_color = primary
 
-# ✅ 배경 높이를 줄임 (기존 min-height:100vh → height:10vh)
+# ✅ 배경 높이 줄임
 st.markdown(
     f"""
     <style>
@@ -46,7 +45,7 @@ st.markdown(
       }}
       .app-root {{
         background: {bg_gradient};
-        height: 10vh; /* ✅ 수정된 부분 */
+        height: 10vh; /* ✅ 배경 줄임 */
       }}
       .glass {{
         background: var(--panel);
@@ -127,18 +126,25 @@ career_dict = {
 # -----------------------------
 st.markdown(
     "<div class='glass'><h1>🌟 MBTI 기반 진로 추천</h1>"
-    "<p>MBTI를 선택하면 상세한 직업 추천을 확인할 수 있어요!</p></div>",
+    "<p>버튼을 눌러 MBTI를 선택하세요!</p></div>",
     unsafe_allow_html=True
 )
 
-mbti = st.selectbox("당신의 MBTI를 선택하세요:", list(career_dict.keys()))
+# 👉 MBTI 버튼 배열 (4x4)
+mbti_types = list(career_dict.keys())
+selected_mbti = None
+cols = st.columns(4)
 
-if mbti:
+for i, t in enumerate(mbti_types):
+    if cols[i % 4].button(t):
+        selected_mbti = t
+
+if selected_mbti:
     st.markdown(
-        f"<div class='glass'><h2>✅ {mbti} 추천 직업</h2></div>",
+        f"<div class='glass'><h2>✅ {selected_mbti} 추천 직업</h2></div>",
         unsafe_allow_html=True
     )
-    for job_info in career_dict[mbti]:
+    for job_info in career_dict[selected_mbti]:
         st.markdown(
             f"""
             <div class='job-card'>
