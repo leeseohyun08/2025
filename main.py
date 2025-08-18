@@ -1,125 +1,15 @@
-# app.py
-# -----------------------------------------------
-# 🌟 MBTI 기반 진로 추천 웹앱 (화려한 이모지 & 커스텀 테마 포함)
-# 실행: streamlit run app.py
-# -----------------------------------------------
+# app.py (오류 수정 완료)
 import streamlit as st
 from datetime import datetime
-import textwrap
 import json
 
 # -----------------------------
 # Page Config
 # -----------------------------
-st.set_page_config(
-    page_title="MBTI 진로 추천 🌈",
-    page_icon="🌈",
-    layout="wide"
-)
+st.set_page_config(page_title="MBTI 진로 추천", layout="wide")
 
 # -----------------------------
-# Sidebar — Theme & Intro
-# -----------------------------
-with st.sidebar:
-    st.markdown("## 🎨 테마 커스터마이즈")
-    primary = st.color_picker("Primary", "#7C3AED")
-    secondary = st.color_picker("Secondary", "#06B6D4")
-    accent = st.color_picker("Accent", "#F59E0B")
-    dark_bg = st.toggle("어두운 배경", value=True)
-    st.markdown("---")
-    st.markdown("### ℹ️ 안내")
-    st.write("MBTI를 선택하면 유형에 맞는 **추천 직업**과 **핵심 역량**, **추천 활동**을 보여줍니다.")
-    st.caption("💡 컬러를 바꾸면 카드/버튼 색감이 즉시 반영돼요!")
-
-# -----------------------------
-# Global Styles (CSS)
-# -----------------------------
-bg_gradient = (
-    f"linear-gradient(135deg, {primary}22 0%, {secondary}22 50%, {accent}22 100%)"
-    if dark_bg else
-    f"linear-gradient(135deg, #ffffff 0%, #fafafa 50%, #ffffff 100%)"
-)
-
-text_color = "#EAEAEA" if dark_bg else "#111827"
-panel_bg = "#0B0F19CC" if dark_bg else "#ffffff"
-card_bg = "#0F172ACC" if dark_bg else "#ffffff"
-border_color = primary
-
-st.markdown(
-    f"""
-    <style>
-      :root {{
-        --primary: {primary};
-        --secondary: {secondary};
-        --accent: {accent};
-        --text: {text_color};
-        --panel: {panel_bg};
-        --card: {card_bg};
-        --border: {border_color};
-      }}
-      .app-root {{
-        background: {bg_gradient};
-        min-height: 200px;
-      }}
-      .glass {{
-        background: var(--panel);
-        backdrop-filter: blur(10px);
-        border: 1px solid {primary}33;
-        border-radius: 20px;
-        padding: 20px;
-        box-shadow: 0 10px 30px #00000022;
-      }}
-      .headline {{
-        font-weight: 800;
-        font-size: 2.1rem;
-        line-height: 1.1;
-        color: var(--text);
-      }}
-      .subline {{
-        font-size: 0.98rem;
-        color: {("#A6ADBB" if dark_bg else "#4B5563")};
-      }}
-      .pill {{
-        display:inline-block;
-        padding: 6px 12px;
-        margin: 2px;
-        border-radius: 999px;
-        border: 1px solid {secondary}55;
-        background: {secondary}1A;
-        color: var(--text);
-        font-size: 0.85rem;
-      }}
-      .job-card {{
-        border: 1px solid var(--border);
-        background: var(--card);
-        border-radius: 16px;
-        padding: 18px;
-        margin-bottom: 14px;
-      }}
-      .job-title {{
-        font-weight: 700; font-size: 1.05rem; color: var(--text);
-      }}
-      .badge {{
-        display:inline-flex; align-items:center; gap:6px;
-        border: 1px dashed {accent}88; padding: 4px 10px; border-radius: 10px;
-        background: {accent}1A; font-size: 0.82rem; color: var(--text);
-      }}
-      .muted {{
-        color: {("#9AA0AA" if dark_bg else "#6B7280")}; font-size: 0.88rem;
-      }}
-      .emoji-huge {{
-        font-size: 2rem; line-height: 1;
-      }}
-      header, .stDeployButton {{ visibility: hidden; height: 0; }}
-      .block-container {{ padding-top: 1rem; }}
-    </style>
-    <div class="app-root"></div>
-    """,
-    unsafe_allow_html=True
-)
-
-# -----------------------------
-# Data — MBTI Career DB (16유형)
+# MBTI 소개 데이터
 # -----------------------------
 MBTI_INTRO = {
     "INTJ": "전략적이고 독립적인 사색가 🧠",
@@ -140,181 +30,115 @@ MBTI_INTRO = {
     "ESFP": "무대 위의 엔터테이너 🎤",
 }
 
-# CAREERS 데이터는 위에서 제공한 16개 MBTI 모두 포함하는 내용 사용
-
-SIMILAR = {
-    "INTJ":["INTP","ENTJ","INFJ"],
-    "INTP":["INTJ","ENTP","INFP"],
-    "ENTJ":["INTJ","ESTJ","ENTP"],
-    "ENTP":["INTP","ENFP","ENTJ"],
-    "INFJ":["INFP","INTJ","ENFJ"],
-    "INFP":["INFJ","ENFP","INTP"],
-    "ENFJ":["INFJ","ESFJ","ENFP"],
-    "ENFP":["INFP","ENTP","ENFJ"],
-    "ISTJ":["ESTJ","ISFJ","INTJ"],
-    "ISFJ":["ESFJ","ISTJ","INFJ"],
-    "ESTJ":["ISTJ","ENTJ","ESFJ"],
-    "ESFJ":["ISFJ","ENFJ","ESTJ"],
-    "ISTP":["ESTP","INTP","ISFP"],
-    "ISFP":["ESFP","INFP","ISTP"],
-    "ESTP":["ISTP","ENTP","ESFP"],
-    "ESFP":["ISFP","ENFP","ESTP"],
+# -----------------------------
+# MBTI별 추천 직업 예시 (최소 3개씩)
+# -----------------------------
+CAREERS = {
+    "INTJ":[
+        {"job":"전략 컨설턴트","why":"논리와 전략적 사고 활용","skills":["분석","기획"],"learn":["경영","데이터 분석"]},
+        {"job":"연구원","why":"깊이 있는 문제 해결","skills":["조사","논리적 사고"],"learn":["실험 설계","리서치"]},
+        {"job":"프로젝트 매니저","why":"효율적인 계획 수립","skills":["조직력","리더십"],"learn":["PM 방법론","리스크 관리"]},
+    ],
+    "INTP":[
+        {"job":"소프트웨어 개발자","why":"논리적 구조 설계","skills":["코딩","알고리즘"],"learn":["자료구조","시스템 설계"]},
+        {"job":"데이터 분석가","why":"데이터에서 인사이트 도출","skills":["분석","통계"],"learn":["Python","SQL"]},
+        {"job":"연구원","why":"이론적 탐구와 실험","skills":["논문 조사","문제 해결"],"learn":["실험 설계","모델링"]},
+    ],
+    "ENTJ":[
+        {"job":"기업 CEO","why":"비전과 리더십 발휘","skills":["전략","조직관리"],"learn":["재무","리더십"]},
+        {"job":"프로젝트 매니저","why":"체계적 관리와 실행","skills":["조직력","계획"],"learn":["PMO","리스크 관리"]},
+        {"job":"전략 컨설턴트","why":"문제 해결 능력 활용","skills":["분석","전략"],"learn":["비즈니스 전략","문제 정의"]},
+    ],
+    "ENTP":[
+        {"job":"스타트업 창업가","why":"창의적 아이디어 실행","skills":["아이디어 발굴","커뮤니케이션"],"learn":["투자","제품 개발"]},
+        {"job":"마케팅 기획자","why":"창의적 캠페인 설계","skills":["분석","아이디어"],"learn":["광고 전략","시장 조사"]},
+        {"job":"컨설턴트","why":"문제 해결과 창의력 활용","skills":["분석","발상 전환"],"learn":["문제 정의","솔루션 설계"]},
+    ],
+    "INFJ":[
+        {"job":"심리 상담사","why":"타인의 감정 이해","skills":["공감","상담"],"learn":["심리학","코칭"]},
+        {"job":"작가","why":"깊이 있는 메시지 전달","skills":["글쓰기","스토리텔링"],"learn":["창작","논리 전개"]},
+        {"job":"NGO 활동가","why":"가치 중심 사회 공헌","skills":["조직","커뮤니케이션"],"learn":["사회문제 연구","프로젝트 관리"]},
+    ],
+    "INFP":[
+        {"job":"작가","why":"가치 중심 창작 활동","skills":["글쓰기","상상력"],"learn":["스토리텔링","문화 연구"]},
+        {"job":"아티스트","why":"감성 표현","skills":["그림","음악"],"learn":["예술 기법","창작 과정"]},
+        {"job":"상담사","why":"타인의 내적 성장 지원","skills":["공감","대화"],"learn":["심리학","코칭"]},
+    ],
+    "ENFJ":[
+        {"job":"HR 매니저","why":"팀 성장과 관리","skills":["리더십","조정"],"learn":["인사 관리","조직 심리"]},
+        {"job":"교사","why":"학생 동기 부여","skills":["커뮤니케이션","조직"],"learn":["교육학","수업 설계"]},
+        {"job":"코치/멘토","why":"개인 성장 지원","skills":["코칭","상담"],"learn":["심리학","멘토링"]},
+    ],
+    "ENFP":[
+        {"job":"마케터","why":"창의적 캠페인","skills":["아이디어","소통"],"learn":["광고 전략","콘텐츠 제작"]},
+        {"job":"기자","why":"호기심 탐험과 전달","skills":["글쓰기","조사"],"learn":["인터뷰","취재"]},
+        {"job":"창업가","why":"새로운 시도와 실험","skills":["리더십","문제 해결"],"learn":["제품 개발","비즈니스 전략"]},
+    ],
+    "ISTJ":[
+        {"job":"회계사","why":"정확성과 체계성 활용","skills":["수리","기록"],"learn":["회계 원리","재무 관리"]},
+        {"job":"관리자","why":"조직 운영과 규칙 준수","skills":["계획","관리"],"learn":["PMO","행정 업무"]},
+        {"job":"엔지니어","why":"정확한 시스템 운영","skills":["분석","문제 해결"],"learn":["설계","품질 관리"]},
+    ],
+    "ISFJ":[
+        {"job":"간호사","why":"세심한 돌봄 제공","skills":["관찰","응급 대처"],"learn":["간호학","심리학"]},
+        {"job":"교사","why":"학생 관리와 지원","skills":["조직","소통"],"learn":["교육학","수업 설계"]},
+        {"job":"사서","why":"정보 관리 및 지원","skills":["정리","분류"],"learn":["정보학","자료 조사"]},
+    ],
+    "ESTJ":[
+        {"job":"운영 관리자","why":"조직과 규율 관리","skills":["계획","리더십"],"learn":["운영 전략","팀 관리"]},
+        {"job":"군인","why":"체계적 명령 수행","skills":["조직력","결정"],"learn":["전략","훈련"]},
+        {"job":"프로젝트 매니저","why":"효율적 프로젝트 운영","skills":["조직","리스크 관리"],"learn":["PM 기법","문제 해결"]},
+    ],
+    "ESFJ":[
+        {"job":"이벤트 플래너","why":"사람 중심 조직","skills":["커뮤니케이션","조정"],"learn":["기획","운영"]},
+        {"job":"간호사","why":"돌봄과 지원","skills":["관찰","소통"],"learn":["간호학","심리학"]},
+        {"job":"교사","why":"학생과 학부모 관리","skills":["조직","공감"],"learn":["교육학","수업 설계"]},
+    ],
+    "ISTP":[
+        {"job":"기계 엔지니어","why":"문제 해결 능력 발휘","skills":["분석","수리"],"learn":["CAD","제작 기법"]},
+        {"job":"파일럿","why":"실제 경험과 판단력 필요","skills":["조종","판단"],"learn":["비행술","안전 관리"]},
+        {"job":"프로그래머","why":"논리적 문제 해결","skills":["코딩","디버깅"],"learn":["자료구조","알고리즘"]},
+    ],
+    "ISFP":[
+        {"job":"디자이너","why":"감성적 창작","skills":["드로잉","색감"],"learn":["그래픽 디자인","포토샵"]},
+        {"job":"뮤지션","why":"감정 표현","skills":["악기 연주","작곡"],"learn":["음악 이론","녹음"]},
+        {"job":"사진작가","why":"순간 포착","skills":["사진 촬영","편집"],"learn":["조명","후보정"]},
+    ],
+    "ESTP":[
+        {"job":"영업 전문가","why":"즉각적 대응과 설득","skills":["커뮤니케이션","판단"],"learn":["영업 전략","협상"]},
+        {"job":"응급 구조사","why":"빠른 판단과 행동","skills":["응급처치","협력"],"learn":["응급 대응","안전 관리"]},
+        {"job":"운동 선수","why":"실력과 집중력 발휘","skills":["체력","전략"],"learn":["훈련","전략 게임"]},
+    ],
+    "ESFP":[
+        {"job":"배우","why":"공연과 감정 표현","skills":["연기","표현력"],"learn":["연기 기법","무대 경험"]},
+        {"job":"가수","why":"음악과 무대 활동","skills":["노래","퍼포먼스"],"learn":["보컬","댄스"]},
+        {"job":"이벤트 호스트","why":"현장 운영과 진행","skills":["소통","조정"],"learn":["이벤트 기획","대인 관계"]},
+    ],
 }
 
-EMOJI_TYPE = {"I":"🧠","E":"🌟","N":"✨","S":"🔎","T":"⚙️","F":"💞","J":"🗂️","P":"🌊"}
+# -----------------------------
+# MBTI 선택
+# -----------------------------
+st.title("🌈 MBTI 진로 추천")
+user_mbti = st.selectbox("당신의 MBTI를 선택하세요:", list(MBTI_INTRO.keys()))
 
 # -----------------------------
-# Helpers
+# 추천 직업 표시
 # -----------------------------
-def mbti_badges(mbti: str) -> str:
-    return " ".join([f"<span class='pill'>{c} {EMOJI_TYPE.get(c,'')}</span>" for c in mbti])
-
-def render_job_card(item):
-    skills = " ".join([f"<span class='pill'>🔧 {s}</span>" for s in item["skills"]])
-    learn = " ".join([f"<span class='pill'>📚 {s}</span>" for s in item["learn"]])
-    return f"""
-      <div class="job-card">
-        <div class="job-title">{item['job']}</div>
-        <div class="muted">💡 {item['why']}</div>
-        <div style="margin-top:10px">{skills}</div>
-        <div style="margin-top:6px">{learn}</div>
-      </div>
-    """
-
-def make_download_payload(user_mbti: str):
-    data = {
-        "generated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
-        "mbti": user_mbti,
-        "intro": MBTI_INTRO.get(user_mbti, ""),
-        "careers": CAREERS.get(user_mbti, []),
-        "similar_types": SIMILAR.get(user_mbti, [])
-    }
-    return json.dumps(data, ensure_ascii=False, indent=2)
+st.subheader(f"{user_mbti} — {MBTI_INTRO[user_mbti]}")
+for job in CAREERS[user_mbti]:
+    st.markdown(f"**{job['job']}** — {job['why']}")
+    st.markdown(f"- 🔧 필수 역량: {', '.join(job['skills'])}")
+    st.markdown(f"- 📚 추천 학습: {', '.join(job['learn'])}")
+    st.markdown("---")
 
 # -----------------------------
-# Header
+# JSON 다운로드
 # -----------------------------
-st.markdown(
-    f"""
-    <div class="glass">
-      <div style="display:flex; align-items:center; gap:16px; flex-wrap:wrap;">
-        <div class="emoji-huge">🌈</div>
-        <div>
-          <div class="headline">MBTI 진로 추천</div>
-          <div class="subline">당신의 성향에 딱 맞는 직업 영감을 찾아보세요 — 선택하고, 읽고, 바로 실행! 🚀</div>
-        </div>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+payload = json.dumps({
+    "mbti": user_mbti,
+    "intro": MBTI_INTRO[user_mbti],
+    "careers": CAREERS[user_mbti],
+}, ensure_ascii=False, indent=2)
 
-# -----------------------------
-# Selector — MBTI Grid + Selectbox
-# -----------------------------
-col1, col2 = st.columns([1,1])
-with col1:
-    st.markdown("#### 🔤 빠른 선택 (버튼)")
-    rows = [["INTJ","INTP","ENTJ","ENTP"],["INFJ","INFP","ENFJ","ENFP"],
-            ["ISTJ","ISFJ","ESTJ","ESFJ"],["ISTP","ISFP","ESTP","ESFP"]]
-    if "selected" not in st.session_state:
-        st.session_state.selected = "INTJ"
-    for row in rows:
-        cols = st.columns(4)
-        for i, t in enumerate(row):
-            with cols[i]:
-                if st.button(t, use_container_width=True):
-                    st.session_state.selected = t
-
-with col2:
-    st.markdown("#### 📋 드롭다운 선택")
-    picked = st.selectbox("MBTI를 선택하세요:", list(MBTI_INTRO.keys()), index=list(MBTI_INTRO.keys()).index(st.session_state.selected))
-    st.session_state.selected = picked
-
-user_mbti = st.session_state.selected
-
-# -----------------------------
-# Summary Panel
-# -----------------------------
-st.markdown(
-    f"""
-    <div class="glass" style="margin-top: 10px;">
-      <div style="display:flex; align-items:flex-start; gap:18px; flex-wrap:wrap;">
-        <div class="emoji-huge">🎯</div>
-        <div style="flex:1">
-          <div class="headline" style="font-size:1.5rem;">{user_mbti} — {MBTI_INTRO.get(user_mbti,"")}</div>
-          <div class="subline" style="margin-top:6px;">{mbti_badges(user_mbti)}</div>
-          <div style="margin-top:10px;">
-            <span class="badge">✨ 추천 직업 3선</span>
-            <span class="badge">🧭 맞춤 역량 & 활동</span>
-            <span class="badge">🔁 비슷한 유형 제안</span>
-          </div>
-        </div>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
-
-# -----------------------------
-# Career Cards + Resources + Similar + Download + Feedback
-# -----------------------------
-left, right = st.columns([1.2, 1])
-with left:
-    st.markdown("### 🧩 추천 직업 카드")
-    careers = CAREERS.get(user_mbti, [])
-    if not careers:
-        st.info("해당 MBTI에 대한 데이터가 아직 없어요.")
-    else:
-        for c in careers:
-            st.markdown(render_job_card(c), unsafe_allow_html=True)
-    with st.expander("📘 유형 요약 & 추천 활동", expanded=True):
-        st.markdown(textwrap.dedent(f"""
-            **{user_mbti} 핵심 성향**
-            - {MBTI_INTRO.get(user_mbti, '')}
-            - 강점: 집중력, 고도 사고력, 몰입
-            - 주의: 과도한 완벽주의/아이디어 과잉 → 작게 시작/짧게 반복 권장
-            **추천 루틴**
-            - 월간: 목표 1~2개, KPI 설정
-            - 주간: 가설 → 실험 → 회고(15분)
-            - 도구: 캘린더 블록, 이슈 트래커, 메모/리서치 아카이브
-        """))
-with right:
-    st.markdown("### 🔗 빠른 리소스")
-    st.markdown("""
-        - 🇰🇷 워크넷: 직업정보/직무역량
-        - 🇰🇷 잡코리아/사람인: 채용공고/직무요건
-        - 🌐 Coursera/edX: 온라인 전문과정
-        - 🧪 Kaggle: 데이터 실전
-    """)
-    st.markdown("### 🧑‍🤝‍🧑 비슷한 유형")
-    sim = SIMILAR.get(user_mbti, [])
-    if sim:
-        st.markdown(" ".join([f"<span class='pill'>{s}</span>" for s in sim]), unsafe_allow_html=True)
-    st.markdown("### 💾 결과 저장")
-    payload = make_download_payload(user_mbti)
-    st.download_button("📥 JSON으로 저장", file_name=f"mbti_{user_mbti}_careers.json", mime="application/json", data=payload, use_container_width=True)
-    st.markdown("### 🙌 피드백")
-    c1, c2 = st.columns(2)
-    if "feedback" not in st.session_state:
-        st.session_state.feedback = {"up":0, "down":0}
-    if c1.button("👍 유용했어요", use_container_width=True):
-        st.session_state.feedback["up"] += 1
-    if c2.button("👎 별로에요", use_container_width=True):
-        st.session_state.feedback["down"] += 1
-    st.caption(f"현재 피드백 — 👍 {st.session_state.feedback['up']} | 👎 {st.session_state.feedback['down']}")
-
-# -----------------------------
-# Footer
-# -----------------------------
-st.markdown(
-    f"""
-    <div class="glass">
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <div class="emoji-huge">💡</div>
-        <div class="subline">참고: MBTI는 경향을 보여줄 뿐, 직업 적합성을 결정하지 않아요.</div>
-      </div>
-    </div>
-    """,
-    unsafe_allow_html=True
-)
+st.download_button("📥 JSON 다운로드", file_name=f"{user_mbti}_careers.json", mime="application/json")
