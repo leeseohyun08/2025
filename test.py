@@ -1,78 +1,82 @@
 import streamlit as st
 import pandas as pd
-from datetime import date
+from datetime import date, timedelta
 
 st.set_page_config(page_title="스터디 플래너", layout="wide")
-st.title("📚 스터디 플래너")
+st.title("📚 자동 스터디 플래너")
 
-# 세션 상태 초기화
-if "tasks" not in st.session_state:
-    st.session_state.tasks = []
+# 세션 초기화
+if "plan" not in st.session_state:
+    st.session_state.plan = []
 
 # --- 입력 영역 ---
-with st.container():
-    st.subheader("✏️ 공부할 일 추가")
-    col1, col2, col3, col4 = st.columns(4)
+st.subheader("✏️ 시험 정보 입력")
+subject = st.text_input("과목 / 시험 이름")
+unit_start = st.number_input("시작 단원(또는 번호)", min_value=1, value=1)
+unit_end = st.number_input("끝 단원(또는 번호)", min_value=1, value=10)
+exam_date = st.date_input("시험 날짜", value=date.today() + timedelta(days=7))
 
-    with col1:
-        task = st.text_input("과목 / 주제")
-    with col2:
-        hours = st.number_input("시간(h)", min_value=1, max_value=24, step=1, value=1)
-    with col3:
-        deadline = st.date_input("마감 기한", value=date.today())
-    with col4:
-        priority = st.selectbox("우선순위", ["높음", "보통", "낮음"])
-
-    if st.button("➕ 추가", use_container_width=True):
-        if task.strip():
-            st.session_state.tasks.append({
-                "과목": task,
-                "시간": int(hours),
-                "마감": deadline,   # ✅ 문자열 대신 date 타입 저장
-                "우선순위": priority,
-                "완료": False
-            })
+if st.button("📌 자동 계획 생성"):
+    if subject.strip():
+        total_units = unit_end - unit_start + 1
+        days_left = (exam_date - date.today()).days
+        
+        if days_left <= 0:
+            st.error("⚠️ 시험 날짜가 오늘보다 이전입니다!")
         else:
-            st.warning("⚠️ 과목/주제를 입력하세요!")
+            units_per_day = total_units // days_left
+            extra = total_units % days_left
+
+            plan = []
+            current_unit = unit_start
+
+            for i in range(days_left):
+                today = date.today() + timedelta(days=i)
+                count = units_per_day + (1 if i < extra else 0)
+                if count > 0:
+                    plan.append({
+                        "날짜": today,
+                        "공부 범위": f"{subject} {current_unit} ~ {current_unit+count-1} 단원",
+                        "완료": False
+                    })
+                    current_unit += count
+
+            st.session_state.plan = plan
+    else:
+        st.warning("⚠️ 과목명을 입력하세요!")
 
 # --- 계획 표시 ---
-st.subheader("📅 내 공부 계획")
+st.subheader("📅 자동 생성된 공부 계획")
 
-if st.session_state.tasks:
-    df = pd.DataFrame(st.session_state.tasks)
+if st.session_state.plan:
+    df = pd.DataFrame(st.session_state.plan)
 
-    # ✅ 체크박스 포함된 표 (칼럼 타입 맞게 설정)
     edited_df = st.data_editor(
         df,
         hide_index=True,
         column_config={
             "완료": st.column_config.CheckboxColumn("완료"),
-            "과목": st.column_config.TextColumn("과목"),
-            "시간": st.column_config.NumberColumn("시간(h)", step=1),
-            "마감": st.column_config.DateColumn("마감"),   # ✅ date 타입과 매칭
-            "우선순위": st.column_config.SelectboxColumn(
-                "우선순위", options=["높음", "보통", "낮음"]
-            ),
+            "날짜": st.column_config.DateColumn("날짜"),
+            "공부 범위": st.column_config.TextColumn("공부 범위"),
         },
         use_container_width=True,
     )
 
-    # 업데이트
-    st.session_state.tasks = edited_df.to_dict(orient="records")
+    st.session_state.plan = edited_df.to_dict(orient="records")
 
     # 진행률
-    done = sum(1 for t in st.session_state.tasks if t["완료"])
-    total = len(st.session_state.tasks)
+    done = sum(1 for p in st.session_state.plan if p["완료"])
+    total = len(st.session_state.plan)
     st.progress(done / total if total else 0)
     st.write(f"✅ 완료 {done}/{total}개")
 
     # 다운로드 버튼
     st.download_button(
-        "📥 CSV 다운로드",
-        pd.DataFrame(st.session_state.tasks).to_csv(index=False).encode("utf-8"),
+        "📥 계획 다운로드 (CSV)",
+        pd.DataFrame(st.session_state.plan).to_csv(index=False).encode("utf-8"),
         "study_plan.csv",
         "text/csv",
         use_container_width=True,
     )
 else:
-    st.info("아직 등록된 할 일이 없습니다.")
+    st.info("아직 생성된 계획이 없습니다. 위에서 시험 정보를 입력하세요!")
