@@ -9,14 +9,36 @@ st.title("📖 자동 스터디 플래너")
 if "plans" not in st.session_state:
     st.session_state.plans = []
 
-# 좌우 컬럼 나누기
+# 좌우 컬럼
 col1, col2 = st.columns([1, 3])  # 왼쪽 좁게, 오른쪽 넓게
 
 # ------------------------ #
-# 📌 왼쪽: 계획 추가 & 선택
+# 📌 왼쪽: 계획 목록 + 삭제 + 새 계획
 # ------------------------ #
 with col1:
-    st.header("📝 계획 추가")
+    st.header("📂 계획 관리")
+
+    # 기존 계획 목록 표시
+    if st.session_state.plans:
+        plan_names = [f"{p['과목']} ({p['시험일']})" for p in st.session_state.plans]
+        selected_index = st.selectbox(
+            "📌 확인할 계획 선택",
+            range(len(plan_names)),
+            format_func=lambda i: plan_names[i]
+        )
+
+        # 삭제 버튼
+        if st.button("❌ 선택 계획 삭제"):
+            deleted_plan = st.session_state.plans.pop(selected_index)
+            st.success(f"'{deleted_plan['과목']}' 계획이 삭제되었습니다!")
+            # 선택 index 초기화
+            selected_index = 0 if st.session_state.plans else None
+    else:
+        st.info("아직 생성된 계획이 없습니다!")
+        selected_index = None
+
+    st.divider()
+    st.header("📝 새 계획 추가")
     subject = st.text_input("과목명", placeholder="예: 수학 문제집")
     unit_type = st.selectbox("단위", ["페이지", "문제", "단어"])
     start = st.number_input(f"시작 {unit_type}", min_value=1, value=1, step=1)
@@ -47,7 +69,6 @@ with col1:
                         })
                         current += count
 
-                # ✅ 괄호 닫기 주의
                 st.session_state.plans.append({
                     "과목": subject,
                     "시험일": exam_date,
@@ -56,26 +77,13 @@ with col1:
                 })
                 st.success(f"✅ '{subject}' 계획이 생성되었습니다!")
 
-    st.divider()
-    st.header("📂 계획 목록")
-
-    plan_names = [f"{p['과목']} ({p['시험일']})" for p in st.session_state.plans]
-    selected_index = (
-        st.selectbox(
-            "📌 확인할 계획 선택",
-            range(len(plan_names)),
-            format_func=lambda i: plan_names[i]
-        )
-        if plan_names else None
-    )
-
 # ---------------------------- #
-# 📋 오른쪽: 선택된 계획 보여주기
+# 📋 오른쪽: 선택된 계획 확인
 # ---------------------------- #
 with col2:
     st.header("📅 선택한 공부 계획")
 
-    if plan_names:
+    if st.session_state.plans and selected_index is not None:
         selected_plan = st.session_state.plans[selected_index]
         df = pd.DataFrame(selected_plan["계획"])
 
@@ -108,4 +116,4 @@ with col2:
             use_container_width=True,
         )
     else:
-        st.info("왼쪽에서 새 계획을 먼저 추가하세요!")
+        st.info("왼쪽에서 계획을 선택하거나 새 계획을 추가하세요!")
