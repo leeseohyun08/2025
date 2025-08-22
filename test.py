@@ -27,8 +27,8 @@ with st.container():
         if task.strip():
             st.session_state.tasks.append({
                 "과목": task,
-                "시간": hours,
-                "마감": str(deadline),
+                "시간": int(hours),
+                "마감": deadline,   # ✅ 문자열 대신 date 타입 저장
                 "우선순위": priority,
                 "완료": False
             })
@@ -41,15 +41,15 @@ st.subheader("📅 내 공부 계획")
 if st.session_state.tasks:
     df = pd.DataFrame(st.session_state.tasks)
 
-    # ✅ 체크박스 포함된 표
+    # ✅ 체크박스 포함된 표 (칼럼 타입 맞게 설정)
     edited_df = st.data_editor(
         df,
         hide_index=True,
         column_config={
             "완료": st.column_config.CheckboxColumn("완료"),
             "과목": st.column_config.TextColumn("과목"),
-            "시간": st.column_config.NumberColumn("시간(h)"),
-            "마감": st.column_config.DateColumn("마감"),
+            "시간": st.column_config.NumberColumn("시간(h)", step=1),
+            "마감": st.column_config.DateColumn("마감"),   # ✅ date 타입과 매칭
             "우선순위": st.column_config.SelectboxColumn(
                 "우선순위", options=["높음", "보통", "낮음"]
             ),
