@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import date, timedelta
 
 st.set_page_config(page_title="스터디 플래너", layout="wide")
-st.title("📖 자동 스터디 플래너 (여러 계획 지원)")
+st.title("📖 자동 스터디 플래너")
 
 # 세션 초기화
 if "plans" not in st.session_state:
